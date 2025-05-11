@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Shell</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 20px;
+    }
+    #terminal {
+      background-color: #000;
+      color: #fff;
+      padding: 10px;
+      height: 300px;
+      overflow-y: scroll;
+      margin-bottom: 10px;
+      white-space: pre-wrap;
+    }
+    #input {
+      width: 100%;
+      padding: 5px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <h1>シンプル ウェブシェル</h1>
+  <div id="terminal"></div>
+  <input type="text" id="input" placeholder="コマンド入力..." autofocus>
+  
+  <script>
+    // 要素の取得
+    const terminal = document.getElementById('terminal');
+    const input = document.getElementById('input');
+    
+    // WebSocket接続
+    const ws = new WebSocket(`ws://${window.location.host}/ws`);
+    
+    // WebSocketイベントハンドラ
+    ws.onopen = () => {
+      addToTerminal('接続しました。コマンドを入力してください。');
+    };
+    
+    ws.onmessage = (event) => {
+      addToTerminal(event.data);
+    };
+    
+    ws.onclose = () => {
+      addToTerminal('接続が閉じられました。');
+      input.disabled = true;
+    };
+    
+    ws.onerror = (error) => {
+      addToTerminal('エラーが発生しました: ' + error.message);
+    };
+    
+    // ターミナルに出力を追加
+    function addToTerminal(text) {
+      terminal.textContent += text;
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+    
+    // コマンド送信処理
+    input.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        const command = input.value;
+        ws.send(command);
+        addToTerminal(`\n$ ${command}\n`);
+        input.value = '';
+      }
+    });
+  </script>
+</body>
+</html>
